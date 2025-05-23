@@ -1,0 +1,261 @@
+/* Cabeçalho */
+
+.header {
+  width: 100vw;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  box-sizing: border-box;
+}
+
+.logo h1 {
+  margin: 0;
+  color: rgba(6, 193, 28, 0.601);
+  font-size: 45px;
+  font-family: "poppins", sans-serif;
+}
+
+.logo p {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(6, 193, 28, 0.601);
+}
+
+.navbar .menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar .menu > li {
+  position: relative;
+  display: inline-block;
+  padding: 10px 25px;
+  cursor: pointer;
+}
+
+.navbar .menu > li:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  padding: inherit;
+  top: 38px;
+  list-style: none;
+  border-radius: 16px;
+  left: -1rem;
+  background-color: rgba(60, 60, 60, 0.8);
+  min-width: 160px;
+  z-index: 1;
+  box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+}
+
+.dropdown-content li {
+  padding: 10px;
+  text-align: left;
+}
+
+.dropdown-content li a {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.dropdown-content li:hover {
+  background-color: #919191;
+}
+
+
+/* Corpo aplicação */
+
+body, html {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  background-image: url("./imgs/Background.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 100%;
+  color: #222;
+}
+
+.grid-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 1);
+  margin-top: 2rem;
+  padding: 1rem;
+  border-radius: 12px;
+  flex: 1 1 250px;
+  max-width: 300px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  min-width: 200px;
+}
+
+.card-content-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.text-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.data {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #264653;
+}
+
+.status {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.status.good {
+  color: #2a9d8f;
+}
+
+.status.medium {
+  color: #e9c46a;
+}
+
+.status.warning {
+  color: #f4a261;
+}
+
+.charts-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.chart-card {
+  background: rgba(255, 255, 255, 1);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  flex: 1 1 450px;
+  max-width: 600px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chart-card h3 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+footer {
+  text-align: center;
+  margin-top: auto;
+  padding-top: 2rem;
+  font-size: 0.85rem;
+  color: #ffffff;
+}
+
+/* Responsivo para telas pequenas */
+@media (max-width: 600px) {
+
+  .card {
+    margin-top: 2rem;
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .chart-card {
+    max-width: 100%;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  .data {
+    font-size: 1.5rem;
+  }
+}
+
+/* Responsivo menu */
+
+.menu-toggle {
+  display: none;
+  font-size: 2rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .menu {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background-color: rgba(60, 60, 60, 0.8);
+    padding: 10px 0;
+  }
+
+  .menu.active {
+    display: flex;
+  }
+
+  .menu li {
+    padding: 10px;
+    list-style: none;
+  }
+
+  .menu li ul.dropdown-content {
+    position: static;
+    display: none;
+    background: none;
+    box-shadow: none;
+  }
+
+  .menu li:hover ul.dropdown-content {
+    display: block;
+  }
+}
+
+
+
