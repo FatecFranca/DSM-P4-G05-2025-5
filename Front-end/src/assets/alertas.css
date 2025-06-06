@@ -20,3 +20,7 @@
   max-width: 80%;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
+
+button{
+  margin-top: 0.4rem;
+}

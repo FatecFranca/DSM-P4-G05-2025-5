@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import App from './Dashboard.jsx';
 import Temperatura from './Temperatura.jsx';
-import UmidadeQualidade from './QualidadeAr.jsx';
+import Umidadequalidade from './QualidadeAr.jsx';
 import Login from './Login.jsx';
 import Cadastro from './Cadastro.jsx';
 import { AuthProvider } from './AuthContext.jsx';
@@ -17,7 +17,7 @@ createRoot(document.getElementById('root')).render(
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="/register" element={<Cadastro />} />
           <Route
             path="/"
             element={
@@ -38,7 +38,7 @@ createRoot(document.getElementById('root')).render(
             path="/umiqualidade"
             element={
               <PrivateRoute>
-                <UmidadeQualidade />
+                <Umidadequalidade />
               </PrivateRoute>
             }
           />

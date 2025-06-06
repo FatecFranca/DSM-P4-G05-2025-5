@@ -3,6 +3,8 @@ import './assets/App.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import AirsenseIcon from './assets/imgs/Airsenseicon.png';
+import { useAuth } from './AuthContext.jsx';
+
 
 const tempData = [
   { dia: 'Seg', temp: 24 },
@@ -14,42 +16,51 @@ const tempData = [
   { dia: 'Dom', temp: 26 }
 ];
 
+
+
 export default function Temperatura() {
   const Navigate = useNavigate();
+    const { logout } = useAuth();
+
+  const handleLogout = () => {
+  logout();
+  Navigate('/login');
+  }
   return (
     <div className="app-container" style={{ width: '100%', height: '100vh' }}>
-        <div className="header">
+              {/* HEADER */}
+      <div className="header">
         <div className="logo">
-          <img width="80" loading="lazy" alt="Logo" src={AirsenseIcon} onClick={() => Navigate('/')} style={{ cursor: 'pointer' }}></img>
+          <img width="80" alt="Logo" src={AirsenseIcon} onClick={() => Navigate('/')} style={{ cursor: 'pointer' }} />
         </div>
         <nav className="navbar">
           <button className="menu-toggle" onClick={() => {
             document.querySelector('.menu').classList.toggle('active');
-          }}>
-            ☰
-          </button>
+          }}>☰</button>
           <ul className="menu">
-            <li>
-              Dashboard ⮛
+            <li>Dashboard ⮛
               <ul className="dropdown-content">
                 <li><a href="/temperatura">Temperatura</a></li>
-                <li><a href="/umidade-qualidade">Umidade/Qualidade Ar</a></li>
+                <li><a href="/umiqualidade">Umidade/Qualidade Ar</a></li>
               </ul>
             </li>
-            <li>
-              Relatórios ⮛
+            <li>Relatórios ⮛
               <ul className="dropdown-content">
                 <li><a href="#">Semana</a></li>
                 <li><a href="#">Mês</a></li>
               </ul>
             </li>
-            <li>
-              Desenvolvedores ⮛
+            <li>Desenvolvedores ⮛
               <ul className="dropdown-content">
                 <li><a href="https://www.linkedin.com/in/ramon-franco-155350227/">Ramon Franco</a></li>
                 <li><a href="https://www.linkedin.com/in/patrícia-nogueira-dias-736146112/">Patrícia Nogueira</a></li>
                 <li><a href="https://www.linkedin.com/in/vini-lemes/">Vinicius Lemes</a></li>
               </ul>
+            </li>
+            <li>
+              <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white' }}>
+                Sair
+              </button>
             </li>
           </ul>
         </nav>
