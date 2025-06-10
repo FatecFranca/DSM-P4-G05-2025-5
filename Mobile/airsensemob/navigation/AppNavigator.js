@@ -1,19 +1,33 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
-import DashboardScreen from '../screens/DashboardScreen';
+
+import Login from '../screens/LoginScreen';
+import Register from '../screens/RegisterScreen';
+import Dashboard from '../screens/DashboardScreen';
+import { useAuth } from '../auth/AuthProvider';
+import BackgroundWrapper from '../utils/BackgroundWrapper';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <BackgroundWrapper>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <>
+            <Stack.Screen name="Dashboard" component={Dashboard} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={Login} />
+            <Stack.Screen name="Register" component={Register} />
+          </>
+        )}
       </Stack.Navigator>
+      </BackgroundWrapper>
     </NavigationContainer>
   );
 }
