@@ -147,6 +147,7 @@ public class DHT11Controller {
     @PostMapping
     public ResponseEntity<DHT11Data> salvar(@RequestBody DHT11Data dado) {
         DHT11Data salvo = service.salvar(dado);
+        System.out.println("DHT11: " + dado);
         return ResponseEntity.status(201).body(salvo);
     }
 }

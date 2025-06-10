@@ -242,10 +242,12 @@ const DashboardScreen = () => {
               onChangeText={setInputValor}
             />
             <Button title="Salvar" onPress={salvarAlertaDefinido} />
-            <Button
-              title="Cancelar"
-              onPress={() => setMostrarDefinirAlerta(false)}
-            />
+            <View style={styles.modalButton}>
+              <Button
+                title="Cancelar"
+                onPress={() => setMostrarDefinirAlerta(false)}
+              />
+            </View>
           </View>
         </View>
       </Modal>
@@ -288,6 +290,9 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: "80%",
+  },
+  modalButton: {
+    marginTop: 10,
   },
   input: {
     borderWidth: 1,

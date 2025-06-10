@@ -92,6 +92,7 @@ public class MQ9Controller {
     @PostMapping
     public ResponseEntity<MQ9Data> salvar(@RequestBody MQ9Data dado) {
         MQ9Data salvo = service.salvar(dado);
+        System.out.println("MQ9: " + dado);
         return ResponseEntity.status(201).body(salvo);
     }
 }

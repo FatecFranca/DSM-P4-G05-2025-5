@@ -26,6 +26,9 @@ export default function Login() {
           placeholder="Usuário"
           value={username}
           onChangeText={setUsername}
+          backgroundColor="black"
+          placeholderTextColor={"#ddd"}
+          color="white"
         />
         <TextInput
           style={styles.input}
@@ -33,6 +36,9 @@ export default function Login() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+          backgroundColor="black"
+          placeholderTextColor={"#ddd"}
+          color="white"
         />
         <Button title="Entrar" color="#2a9d8f" onPress={handleLogin} />
         <View style={styles.button}>
