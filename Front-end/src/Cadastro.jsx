@@ -9,30 +9,38 @@ export default function Cadastro() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleCadastro = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleCadastro = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const response = await fetch('http://localhost:8080/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const text = await response.text();
+    let data;
     try {
-      const response = await fetch('http://localhost:8080/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }), // ✅ formato correto
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMensagem('Cadastro realizado com sucesso!');
-        setTimeout(() => navigate('/login'), 1500);
-      } else {
-        setMensagem(data.message || 'Erro ao cadastrar');
-      }
-    } catch (err) {
-      setMensagem('Erro ao conectar ao servidor.');
-    } finally {
-      setLoading(false);
+      data = JSON.parse(text);
+    } catch {
+      data = { message: text };
     }
-  };
+
+    if (response.ok) {
+      setMensagem('Cadastro realizado com sucesso!');
+      setTimeout(() => navigate('/login'), 1500);
+    } else {
+      setMensagem(data.message || 'Erro ao cadastrar');
+    }
+  } catch (err) {
+    console.error('Erro ao cadastrar:', err);
+    setMensagem('Erro ao conectar ao servidor.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="cadastro-container">
