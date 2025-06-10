@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,13 +27,18 @@ public class MQ9Controller {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim,
+            @RequestParam(required = false, defaultValue = "0") int limit
     ) {
         List<MQ9Data> dados;
         if (inicio != null && fim != null) {
             dados = service.buscarPorIntervalo(inicio, fim);
         } else {
             dados = service.listarTodos();
+        }
+        dados.sort(Comparator.comparing(MQ9Data::getDataHora).reversed());
+        if (limit > 0 && dados.size() > limit) {
+            dados = dados.subList(0, limit);
         }
         return ResponseEntity.ok(dados);
     }
@@ -92,7 +98,6 @@ public class MQ9Controller {
     @PostMapping
     public ResponseEntity<MQ9Data> salvar(@RequestBody MQ9Data dado) {
         MQ9Data salvo = service.salvar(dado);
-        System.out.println("MQ9: " + dado);
         return ResponseEntity.status(201).body(salvo);
     }
 }

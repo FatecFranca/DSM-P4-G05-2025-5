@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,16 +30,20 @@ public class DHT11Controller {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim,
+            @RequestParam(required = false, defaultValue = "0") int limit
     ) {
         List<DHT11Data> dados;
-
         if (inicio != null && fim != null) {
             dados = service.buscarPorIntervalo(inicio, fim);
         } else {
             dados = service.listarTodos();
         }
+        dados.sort(Comparator.comparing(DHT11Data::getDataHora).reversed());
+        if (limit > 0 && dados.size() > limit) {
 
+            dados = dados.subList(0, limit);
+        }
         return ResponseEntity.ok(dados);
     }
 
@@ -147,7 +152,6 @@ public class DHT11Controller {
     @PostMapping
     public ResponseEntity<DHT11Data> salvar(@RequestBody DHT11Data dado) {
         DHT11Data salvo = service.salvar(dado);
-        System.out.println("DHT11: " + dado);
         return ResponseEntity.status(201).body(salvo);
     }
 }
