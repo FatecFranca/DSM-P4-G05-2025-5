@@ -17,7 +17,7 @@ import {
 import axios from "../api/axios";
 import { useAuth } from "../auth/AuthProvider";
 import { LineChart, BarChart } from "react-native-chart-kit";
-import Icon from "react-native-vector-icons/MaterialIcons"; // Import Icon
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -37,12 +37,7 @@ const chartConfig = {
 };
 
 const DashboardScreen = () => {
-  const { logout } = useAuth();
-  const [mostrarAlerta, setMostrarAlerta] = useState(false);
-  const [tipoAlerta, setTipoAlerta] = useState("");
-  const [valorAlerta, setValorAlerta] = useState("");
-  const [statusAlerta, setStatusAlerta] = useState("");
-
+  const { logout, token } = useAuth();
   const [tempData, setTempData] = useState([]);
   const [umidData, setUmidData] = useState([]);
 
@@ -50,26 +45,66 @@ const DashboardScreen = () => {
   const [ultimaUmidade, setUltimaUmidade] = useState(null);
   const [ultimaQualidade, setUltimaQualidade] = useState(null);
 
+  const [alertasConfigurados, setAlertasConfigurados] = useState([]);
+
   const [mostrarDefinirAlerta, setMostrarDefinirAlerta] = useState(false);
   const [tipoAlertaDefinido, setTipoAlertaDefinido] = useState("");
-  const [valoresAlertasDefinidos, setValoresAlertasDefinidos] = useState({});
   const [inputValor, setInputValor] = useState("");
 
   const abrirModalDefinirAlerta = (tipo) => {
     setTipoAlertaDefinido(tipo);
+    const alertaExistente = alertasConfigurados.find(
+      (a) => a.tipo === tipo.toUpperCase().replace(" ", "_")
+    );
+    setInputValor(alertaExistente?.valorLimite?.toString() || "");
     setMostrarDefinirAlerta(true);
   };
 
-  const salvarAlertaDefinido = () => {
-    setValoresAlertasDefinidos((prev) => ({
-      ...prev,
-      [tipoAlertaDefinido]: parseFloat(inputValor),
-    }));
+  const salvarAlertaDefinido = async () => {
+    try {
+      await axios.post(
+        "/alertas",
+        {
+          tipo: tipoAlertaDefinido.toUpperCase().replace(" ", "_"),
+          valorLimite: parseFloat(inputValor),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchAlertas();
+    } catch (err) {
+      console.error("Erro ao salvar alerta:", err);
+    }
     setInputValor("");
     setMostrarDefinirAlerta(false);
   };
 
+  const fetchAlertas = async () => {
+    try {
+      const res = await axios.get("/alertas", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAlertasConfigurados(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar alertas:", err);
+    }
+  };
+
+  const buscarLimite = (tipo) => {
+    const alerta = alertasConfigurados.find((a) => a.tipo === tipo);
+    return alerta?.valorLimite;
+  };
+
+  const getStatus = (tipo, valorAtual) => {
+    const limite = buscarLimite(tipo);
+    if (limite === undefined) return null;
+    if (tipo === "UMIDADE")
+      return valorAtual < limite ? "Fora da faixa" : "Dentro da faixa";
+    return valorAtual > limite ? "Fora da faixa" : "Dentro da faixa";
+  };
+
   useEffect(() => {
+    fetchAlertas();
+
     axios
       .get("/dht11/semana-temp")
       .then((response) => setTempData(response.data))
@@ -100,65 +135,9 @@ const DashboardScreen = () => {
       .catch((err) => console.error("Erro ao buscar último mq9:", err));
   }, []);
 
-  useEffect(() => {
-    if (Object.keys(valoresAlertasDefinidos).length === 0) return;
-    if (
-      ultimaTemperatura == null ||
-      ultimaUmidade == null ||
-      ultimaQualidade == null
-    )
-      return;
-
-    const alertas = [];
-    const temperatura = ultimaTemperatura;
-    const umidade = ultimaUmidade;
-    const qualidade = ultimaQualidade;
-
-    if (
-      valoresAlertasDefinidos["Temperatura"] &&
-      temperatura > valoresAlertasDefinidos["Temperatura"]
-    ) {
-      alertas.push({
-        tipo: "Temperatura",
-        valor: `${temperatura}°C`,
-        status: "Alta",
-      });
-    }
-
-    if (
-      valoresAlertasDefinidos["Umidade"] &&
-      umidade < valoresAlertasDefinidos["Umidade"]
-    ) {
-      alertas.push({ tipo: "Umidade", valor: `${umidade}%`, status: "Baixa" });
-    }
-
-    if (
-      valoresAlertasDefinidos["Qualidade do Ar"] &&
-      qualidade > valoresAlertasDefinidos["Qualidade do Ar"]
-    ) {
-      alertas.push({
-        tipo: "Qualidade do Ar",
-        valor: qualidade,
-        status: "Preocupante",
-      });
-    }
-
-    let delay = 0;
-    alertas.forEach((alerta) => {
-      setTimeout(() => {
-        setTipoAlerta(alerta.tipo);
-        setValorAlerta(alerta.valor);
-        setStatusAlerta(alerta.status);
-        setMostrarAlerta(true);
-      }, delay);
-      delay += 4000;
-    });
-  }, [
-    valoresAlertasDefinidos,
-    ultimaTemperatura,
-    ultimaUmidade,
-    ultimaQualidade,
-  ]);
+  const statusTemperatura = getStatus("TEMPERATURA", ultimaTemperatura);
+  const statusUmidade = getStatus("UMIDADE", ultimaUmidade);
+  const statusQualidade = getStatus("QUALIDADE_AR", ultimaQualidade);
 
   const handleLogout = async () => {
     await logout();
@@ -200,13 +179,6 @@ const DashboardScreen = () => {
         </View>
 
         <ScrollView contentContainerStyle={styles.container}>
-          {mostrarAlerta &&
-            Alert.alert(
-              `Alerta de ${tipoAlerta}`,
-              `Valor atual: ${valorAlerta}\nStatus: ${statusAlerta}`,
-              [{ text: "Fechar", onPress: () => setMostrarAlerta(false) }]
-            )}
-
           {tempData.length > 0 &&
             temperaturaChart.datasets[0].data.some((v) => v > 0) && (
               <View style={styles.chartBox}>
@@ -251,7 +223,7 @@ const DashboardScreen = () => {
               <Text>
                 {ultimaTemperatura !== null ? `${ultimaTemperatura}°C` : "--"}
               </Text>
-              <Text style={styles.status}>Moderada</Text>
+              <Text style={styles.status}>{statusTemperatura}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -264,7 +236,7 @@ const DashboardScreen = () => {
               />
               <Text style={styles.cardTitle}>Umidade</Text>
               <Text>{ultimaUmidade !== null ? `${ultimaUmidade}%` : "--"}</Text>
-              <Text style={styles.status}>Moderada</Text>
+              <Text style={styles.status}>{statusUmidade}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -277,7 +249,7 @@ const DashboardScreen = () => {
               />
               <Text style={styles.cardTitle}>Qualidade do Ar</Text>
               <Text>{ultimaQualidade !== null ? ultimaQualidade : "--"}</Text>
-              <Text style={styles.status}>Preocupante</Text>
+              <Text style={styles.status}>{statusQualidade}</Text>
             </TouchableOpacity>
           </View>
 
@@ -325,7 +297,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: "bold", color: "#fff" },
   logoutIcon: {
-    padding: 5, // Gives some touch area around the icon
+    padding: 5,
   },
   chartBox: {
     marginBottom: 30,
