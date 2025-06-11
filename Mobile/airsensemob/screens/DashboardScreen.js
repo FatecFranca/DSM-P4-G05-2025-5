@@ -52,7 +52,8 @@ const DashboardScreen = () => {
   const [inputValor, setInputValor] = useState("");
 
   const abrirModalDefinirAlerta = (tipo) => {
-    setTipoAlertaDefinido(tipo);
+    setTipoAlertaDefinido(validaAlerta(tipo));
+
     const alertaExistente = alertasConfigurados.find(
       (a) => a.tipo === tipo.toUpperCase().replace(" ", "_")
     );
@@ -60,8 +61,16 @@ const DashboardScreen = () => {
     setMostrarDefinirAlerta(true);
   };
 
+  const validaAlerta = (tipo) => {
+    if (tipo.toUpperCase() == "QUALIDADE DO AR") {
+      return "QUALIDADE_AR";
+    }
+    return tipo;
+  };
+
   const salvarAlertaDefinido = async () => {
     try {
+      setTipoAlertaDefinido(validaAlerta(tipoAlertaDefinido));
       await axios.post(
         "/alertas",
         {
@@ -97,9 +106,7 @@ const DashboardScreen = () => {
   const getStatus = (tipo, valorAtual) => {
     const limite = buscarLimite(tipo);
     if (limite === undefined) return null;
-    if (tipo === "UMIDADE")
-      return valorAtual < limite ? "Fora da faixa" : "Dentro da faixa";
-    return valorAtual > limite ? "Fora da faixa" : "Dentro da faixa";
+    return valorAtual > limite ? "Dentro da faixa" : "Fora da faixa";
   };
 
   useEffect(() => {
@@ -170,7 +177,6 @@ const DashboardScreen = () => {
       resizeMode="cover"
     >
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Header com o título e o botão de sair (agora um ícone) */}
         <View style={styles.header}>
           <Text style={styles.title}>Dashboard</Text>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutIcon}>
