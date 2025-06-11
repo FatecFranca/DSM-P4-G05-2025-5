@@ -1,5 +1,3 @@
-// === DashboardScreen.js (React Native) ===
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -13,10 +11,13 @@ import {
   Modal,
   TextInput,
   Dimensions,
+  SafeAreaView,
+  ImageBackground,
 } from "react-native";
 import axios from "../api/axios";
 import { useAuth } from "../auth/AuthProvider";
-import { LineChart } from "react-native-chart-kit";
+import { LineChart, BarChart } from "react-native-chart-kit";
+import Icon from "react-native-vector-icons/MaterialIcons"; // Import Icon
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -32,6 +33,7 @@ const chartConfig = {
     strokeWidth: "2",
     stroke: "#007AFF",
   },
+  paddingRight: 30,
 };
 
 const DashboardScreen = () => {
@@ -43,6 +45,10 @@ const DashboardScreen = () => {
 
   const [tempData, setTempData] = useState([]);
   const [umidData, setUmidData] = useState([]);
+
+  const [ultimaTemperatura, setUltimaTemperatura] = useState(null);
+  const [ultimaUmidade, setUltimaUmidade] = useState(null);
+  const [ultimaQualidade, setUltimaQualidade] = useState(null);
 
   const [mostrarDefinirAlerta, setMostrarDefinirAlerta] = useState(false);
   const [tipoAlertaDefinido, setTipoAlertaDefinido] = useState("");
@@ -73,15 +79,40 @@ const DashboardScreen = () => {
       .get("/dht11/semana-umidade")
       .then((response) => setUmidData(response.data))
       .catch((err) => console.error("Erro ao buscar umidade:", err));
+
+    axios
+      .get("/dht11?limit=1")
+      .then((res) => {
+        const ultimo = res.data[0];
+        if (ultimo) {
+          setUltimaTemperatura(ultimo.temperatura);
+          setUltimaUmidade(ultimo.umidade);
+        }
+      })
+      .catch((err) => console.error("Erro ao buscar último dht11:", err));
+
+    axios
+      .get("/mq9?limit=1")
+      .then((res) => {
+        const ultimo = res.data[0];
+        if (ultimo) setUltimaQualidade(ultimo.ppm);
+      })
+      .catch((err) => console.error("Erro ao buscar último mq9:", err));
   }, []);
 
   useEffect(() => {
     if (Object.keys(valoresAlertasDefinidos).length === 0) return;
+    if (
+      ultimaTemperatura == null ||
+      ultimaUmidade == null ||
+      ultimaQualidade == null
+    )
+      return;
 
     const alertas = [];
-    const temperatura = 28;
-    const umidade = 45;
-    const qualidade = 75;
+    const temperatura = ultimaTemperatura;
+    const umidade = ultimaUmidade;
+    const qualidade = ultimaQualidade;
 
     if (
       valoresAlertasDefinidos["Temperatura"] &&
@@ -122,28 +153,31 @@ const DashboardScreen = () => {
       }, delay);
       delay += 4000;
     });
-  }, [valoresAlertasDefinidos]);
+  }, [
+    valoresAlertasDefinidos,
+    ultimaTemperatura,
+    ultimaUmidade,
+    ultimaQualidade,
+  ]);
 
   const handleLogout = async () => {
     await logout();
   };
 
   const umidadeChart = {
-    labels: umidData.map((d) => d.dia),
+    labels: umidData.map((d) => d.dia ?? ""),
     datasets: [
       {
-        data: umidData.map((d) => d.umidade),
-        color: () => "#00BFFF",
-        strokeWidth: 2,
+        data: umidData.map((d) => Number(d.umidade) || 0),
       },
     ],
   };
 
   const temperaturaChart = {
-    labels: tempData.map((d) => d.dia),
+    labels: tempData.map((d) => d.dia ?? ""),
     datasets: [
       {
-        data: tempData.map((d) => d.temp),
+        data: tempData.map((d) => Number(d.temp) || 0),
         color: () => "#FF6347",
         strokeWidth: 2,
       },
@@ -151,125 +185,178 @@ const DashboardScreen = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
-
-      {mostrarAlerta &&
-        Alert.alert(
-          `Alerta de ${tipoAlerta}`,
-          `Valor atual: ${valorAlerta}\nStatus: ${statusAlerta}`,
-          [{ text: "Fechar", onPress: () => setMostrarAlerta(false) }]
-        )}
-
-      {tempData.length > 0 && (
-        <View style={styles.chartBox}>
-          <Text style={styles.chartTitle}>Temperatura (últimos dias)</Text>
-          <LineChart
-            data={temperaturaChart}
-            width={screenWidth - 40}
-            height={220}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.chart}
-          />
+    <ImageBackground
+      source={require("../assets/Background.png")}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Header com o título e o botão de sair (agora um ícone) */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Dashboard</Text>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutIcon}>
+            <Icon name="exit-to-app" size={30} color="#FF4C4C" />
+          </TouchableOpacity>
         </View>
-      )}
 
-      {umidData.length > 0 && (
-        <View style={styles.chartBox}>
-          <Text style={styles.chartTitle}>Umidade (últimos dias)</Text>
-          <LineChart
-            data={umidadeChart}
-            width={screenWidth - 40}
-            height={220}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.chart}
-          />
-        </View>
-      )}
+        <ScrollView contentContainerStyle={styles.container}>
+          {mostrarAlerta &&
+            Alert.alert(
+              `Alerta de ${tipoAlerta}`,
+              `Valor atual: ${valorAlerta}\nStatus: ${statusAlerta}`,
+              [{ text: "Fechar", onPress: () => setMostrarAlerta(false) }]
+            )}
 
-      <View style={styles.cardContainer}>
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => abrirModalDefinirAlerta("Temperatura")}
-        >
-          <Image
-            source={require("../assets/Tempicon.png")}
-            style={styles.icon}
-          />
-          <Text style={styles.cardTitle}>Temperatura</Text>
-          <Text>28°C</Text>
-          <Text style={styles.status}>Moderada</Text>
-        </TouchableOpacity>
+          {tempData.length > 0 &&
+            temperaturaChart.datasets[0].data.some((v) => v > 0) && (
+              <View style={styles.chartBox}>
+                <Text style={styles.chartTitle}>
+                  Temperatura (últimos dias)
+                </Text>
+                <LineChart
+                  data={temperaturaChart}
+                  width={screenWidth - 40}
+                  height={220}
+                  chartConfig={chartConfig}
+                  bezier
+                  style={styles.chart}
+                />
+              </View>
+            )}
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => abrirModalDefinirAlerta("Umidade")}
-        >
-          <Image
-            source={require("../assets/umidicon.png")}
-            style={styles.icon}
-          />
-          <Text style={styles.cardTitle}>Umidade</Text>
-          <Text>58%</Text>
-          <Text style={styles.status}>Moderada</Text>
-        </TouchableOpacity>
+          {umidData.length > 0 &&
+            umidadeChart.datasets[0].data.some((v) => v > 0) && (
+              <View style={styles.chartBox}>
+                <Text style={styles.chartTitle}>Umidade (últimos dias)</Text>
+                <BarChart
+                  data={umidadeChart}
+                  width={screenWidth - 40}
+                  height={220}
+                  chartConfig={chartConfig}
+                  style={styles.chart}
+                />
+              </View>
+            )}
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => abrirModalDefinirAlerta("Qualidade do Ar")}
-        >
-          <Image
-            source={require("../assets/qualidadeicon.png")}
-            style={styles.icon}
-          />
-          <Text style={styles.cardTitle}>Qualidade do Ar</Text>
-          <Text>71</Text>
-          <Text style={styles.status}>Preocupante</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Modal visible={mostrarDefinirAlerta} transparent animationType="slide">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalBox}>
-            <Text>Definir Alerta de {tipoAlertaDefinido}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Valor limite"
-              keyboardType="numeric"
-              value={inputValor}
-              onChangeText={setInputValor}
-            />
-            <Button title="Salvar" onPress={salvarAlertaDefinido} />
-            <View style={styles.modalButton}>
-              <Button
-                title="Cancelar"
-                onPress={() => setMostrarDefinirAlerta(false)}
+          <View style={styles.cardContainer}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => abrirModalDefinirAlerta("Temperatura")}
+            >
+              <Image
+                source={require("../assets/Tempicon.png")}
+                style={styles.icon}
               />
-            </View>
-          </View>
-        </View>
-      </Modal>
+              <Text style={styles.cardTitle}>Temperatura</Text>
+              <Text>
+                {ultimaTemperatura !== null ? `${ultimaTemperatura}°C` : "--"}
+              </Text>
+              <Text style={styles.status}>Moderada</Text>
+            </TouchableOpacity>
 
-      <Button title="Sair" onPress={handleLogout} />
-    </ScrollView>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => abrirModalDefinirAlerta("Umidade")}
+            >
+              <Image
+                source={require("../assets/umidicon.png")}
+                style={styles.icon}
+              />
+              <Text style={styles.cardTitle}>Umidade</Text>
+              <Text>{ultimaUmidade !== null ? `${ultimaUmidade}%` : "--"}</Text>
+              <Text style={styles.status}>Moderada</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => abrirModalDefinirAlerta("Qualidade do Ar")}
+            >
+              <Image
+                source={require("../assets/qualidadeicon.png")}
+                style={styles.icon}
+              />
+              <Text style={styles.cardTitle}>Qualidade do Ar</Text>
+              <Text>{ultimaQualidade !== null ? ultimaQualidade : "--"}</Text>
+              <Text style={styles.status}>Preocupante</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Modal
+            visible={mostrarDefinirAlerta}
+            transparent
+            animationType="slide"
+          >
+            <View style={styles.modalBackground}>
+              <View style={styles.modalBox}>
+                <Text>Definir Alerta de {tipoAlertaDefinido}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Valor limite"
+                  keyboardType="numeric"
+                  value={inputValor}
+                  onChangeText={setInputValor}
+                />
+                <Button title="Salvar" onPress={salvarAlertaDefinido} />
+                <View style={styles.modalButton}>
+                  <Button
+                    title="Cancelar"
+                    onPress={() => setMostrarDefinirAlerta(false)}
+                  />
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </ScrollView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, alignItems: "center" },
-  title: { fontSize: 24, marginBottom: 20 },
-  chartBox: { marginBottom: 30 },
-  chartTitle: { fontSize: 16, marginBottom: 10 },
-  chart: { borderRadius: 10 },
+  container: { flexGrow: 1, alignItems: "center" },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    marginBottom: 20,
+  },
+  title: { fontSize: 28, fontWeight: "bold", color: "#fff" },
+  logoutIcon: {
+    padding: 5, // Gives some touch area around the icon
+  },
+  chartBox: {
+    marginBottom: 30,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 10,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  chartTitle: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: "#000",
+    fontWeight: "bold",
+    alignSelf: "center",
+  },
+  chart: {
+    borderRadius: 16,
+    overflow: "hidden",
+  },
   cardContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
   },
   card: {
-    backgroundColor: "#eee",
+    backgroundColor: "#ffffff",
     padding: 20,
     margin: 10,
     alignItems: "center",
