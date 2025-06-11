@@ -12,10 +12,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -57,14 +60,22 @@ public class DHT11Controller {
         List<DHT11Data> dados = (inicio != null && fim != null)
                 ? service.buscarPorIntervalo(inicio, fim)
                 : service.listarTodos();
+
         dados = DataUtil.filtrarComDataValida(dados, DHT11Data::getDataHora);
-        List<TempDTO> tempData = dados.stream()
+
+        DayOfWeek hoje = LocalDate.now().getDayOfWeek();
+
+        Map<DayOfWeek, Double> agrupado = dados.stream()
                 .collect(Collectors.groupingBy(
                         d -> d.getDataHora().getDayOfWeek(),
-                        LinkedHashMap::new,
                         Collectors.averagingDouble(DHT11Data::getTemperatura)
-                ))
-                .entrySet().stream()
+                ));
+
+        List<TempDTO> tempData = agrupado.entrySet().stream()
+                .sorted(Comparator.comparingInt(entry -> {
+                    int diff = entry.getKey().getValue() - hoje.getValue();
+                    return diff > 0 ? diff : diff + 7;
+                }))
                 .map(entry -> new TempDTO(
                         DataUtil.formatarDiaSemana(entry.getKey()),
                         entry.getValue()
@@ -73,6 +84,8 @@ public class DHT11Controller {
 
         return ResponseEntity.ok(tempData);
     }
+
+
 
     @GetMapping("/mes-temp")
     public ResponseEntity<List<TempDTO>> listarTemperaturasPorSemana(
@@ -108,13 +121,19 @@ public class DHT11Controller {
                 ? service.buscarPorIntervalo(inicio, fim)
                 : service.listarTodos();
         dados = DataUtil.filtrarComDataValida(dados, DHT11Data::getDataHora);
+
+        DayOfWeek hoje = LocalDate.now().getDayOfWeek();
+
         List<UmidadeDTO> tempData = dados.stream()
                 .collect(Collectors.groupingBy(
                         d -> d.getDataHora().getDayOfWeek(),
-                        LinkedHashMap::new,
-                        Collectors.averagingDouble(DHT11Data::getTemperatura)
+                        Collectors.averagingDouble(DHT11Data::getUmidade)
                 ))
                 .entrySet().stream()
+                .sorted(Comparator.comparingInt(entry -> {
+                    int diff = entry.getKey().getValue() - hoje.getValue();
+                    return diff > 0 ? diff : diff + 7;
+                }))
                 .map(entry -> new UmidadeDTO(
                         DataUtil.formatarDiaSemana(entry.getKey()),
                         entry.getValue()

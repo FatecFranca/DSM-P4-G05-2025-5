@@ -9,6 +9,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -54,21 +56,28 @@ public class MQ9Controller {
                 ? service.buscarPorIntervalo(inicio, fim)
                 : service.listarTodos();
         dados = DataUtil.filtrarComDataValida(dados, MQ9Data::getDataHora);
+
+        DayOfWeek hoje = LocalDate.now().getDayOfWeek();
+
         List<PpmDiaDTO> ppmData = dados.stream()
                 .collect(Collectors.groupingBy(
                         d -> d.getDataHora().getDayOfWeek(),
-                        LinkedHashMap::new,
                         Collectors.averagingDouble(MQ9Data::getPpm)
                 ))
                 .entrySet().stream()
+                .sorted(Comparator.comparingInt(entry -> {
+                    int diff = entry.getKey().getValue() - hoje.getValue();
+                    return diff > 0 ? diff : diff + 7;
+                }))
                 .map(entry -> new PpmDiaDTO(
-                        DataUtil.formatarDiaSemana(entry.getKey()), // reutiliza seu utilitário
+                        DataUtil.formatarDiaSemana(entry.getKey()),
                         entry.getValue()
                 ))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(ppmData);
     }
+
 
     @GetMapping("/mes")
     public ResponseEntity<List<PpmDiaDTO>> listarPpmPorSemanaDoMes(
