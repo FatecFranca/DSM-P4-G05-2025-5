@@ -54,12 +54,12 @@ function App() {
 
   useEffect(() => {
     // Buscar dados da temperatura
-  axios.get('http://172.200.143.12/dht11/semana-temp')
+  axios.get('http://172.200.143.12:8080/dht11/semana-temp')
     .then(response => setTempData(response.data))
     .catch(err => console.error('Erro ao buscar temperatura:', err));
 
     // Buscar dados da umidade
-  axios.get('http://172.200.143.12/dht11/semana-umidade')
+  axios.get('http://172.200.143.12:8080/dht11/semana-umidade')
     .then(response => setUmidData(response.data))
     .catch(err => console.error('Erro ao buscar umidade:', err));
   }, []);
