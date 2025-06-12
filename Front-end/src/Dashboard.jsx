@@ -12,10 +12,10 @@ import ModalAlerta from './Alertas';
 import { useAuth } from './AuthContext.jsx';
 import axios from 'axios';
 
-import AirsenseIcon from './assets/imgs/airsenseicon.png';
-import Tempicon from './assets/imgs/tempicon.png';
+import AirsenseIcon from './assets/imgs/Airsenseicon.png';
+import Tempicon from './assets/imgs/Tempicon.png';
 import Umidicon from './assets/imgs/umidicon.png';
-import QualidadeIcon from './assets/imgs/qualidadeicon.png';
+import QualidadeIcon from './assets/imgs/Qualidadeicon.png';
 
 function App() {
   const navigate = useNavigate();
