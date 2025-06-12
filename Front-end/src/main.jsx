@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import App from './Dashboard.jsx';
 import Temperatura from './Temperatura.jsx';
-import Umidadequalidade from './QualidadeAr.jsx';
+import Umidadequalidade from './Umidade.jsx';
 import Login from './Login.jsx';
 import Cadastro from './Cadastro.jsx';
 import { AuthProvider } from './AuthContext.jsx';

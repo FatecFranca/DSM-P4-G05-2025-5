@@ -6,18 +6,6 @@ import AirsenseIcon from './assets/imgs/Airsenseicon.png';
 import { useAuth } from './AuthContext.jsx';
 
 
-const tempData = [
-  { dia: 'Seg', temp: 24 },
-  { dia: 'Ter', temp: 26 },
-  { dia: 'Qua', temp: 25 },
-  { dia: 'Qui', temp: 27 },
-  { dia: 'Sex', temp: 28 },
-  { dia: 'Sáb', temp: 29 },
-  { dia: 'Dom', temp: 26 }
-];
-
-
-
 export default function Temperatura() {
   const Navigate = useNavigate();
     const { logout } = useAuth();
@@ -41,13 +29,13 @@ export default function Temperatura() {
             <li>Dashboard ⮛
               <ul className="dropdown-content">
                 <li><a href="/temperatura">Temperatura</a></li>
-                <li><a href="/umiqualidade">Umidade/Qualidade Ar</a></li>
+                <li><a href="/umiqualidade">Umidade Ar</a></li>
               </ul>
             </li>
             <li>Relatórios ⮛
               <ul className="dropdown-content">
-                <li><a href="#">Semana</a></li>
-                <li><a href="#">Mês</a></li>
+                <li><a href="/relatorios/AnalisePi.pbix" download>PowerBi</a></li>
+                <li><a href="/relatorios/AnalisePi.pdf" download>PDF</a></li>
               </ul>
             </li>
             <li>Desenvolvedores ⮛
@@ -66,16 +54,18 @@ export default function Temperatura() {
         </nav>
       </div>
         <div className="chart-card" style={{ marginTop: '1rem',maxWidth: '80%', height: '80%', margin: 'auto' }}>
-        <h3>Temperatura (últimos 7 dias)</h3>
-        <ResponsiveContainer width="100%" height={450}>
-            <LineChart data={tempData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="dia" />
-            <YAxis unit="°C" />
-            <Tooltip />
-            <Line type="monotone" dataKey="temp" stroke="#e76f51" strokeWidth={2} />
-            </LineChart>
-        </ResponsiveContainer>
+          <div
+            className="chart-card"
+            style={{ marginTop: '1rem', maxWidth: '80%', height: '80%', margin: 'auto' }}
+          >
+            <iframe
+              src="/relatorios/Temperatura.pdf"
+              title="Relatório Umidade"
+              width="100%"
+              height="100%"
+              style={{ border: 'none' }}
+            />
+          </div>
         </div>
     </div>
   );
