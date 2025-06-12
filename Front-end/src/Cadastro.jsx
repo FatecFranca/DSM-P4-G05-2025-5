@@ -13,7 +13,7 @@ const handleCadastro = async (e) => {
   e.preventDefault();
   setLoading(true);
   try {
-    const response = await fetch('http://localhost:8080/auth/register', {
+    const response = await fetch('http://172.200.143.12/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
