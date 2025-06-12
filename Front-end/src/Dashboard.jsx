@@ -12,7 +12,7 @@ import ModalAlerta from './Alertas';
 import { useAuth } from './AuthContext.jsx';
 import axios from 'axios';
 
-import AirsenseIcon from './assets/imgs/Airsenseicon.png';
+import AirsenseIcon from './assets/imgs/airsenseicon.png';
 import Tempicon from './assets/imgs/tempicon.png';
 import Umidicon from './assets/imgs/umidicon.png';
 import QualidadeIcon from './assets/imgs/qualidadeicon.png';
@@ -55,7 +55,7 @@ function App() {
   useEffect(() => {
     // Buscar dados da temperatura
   axios.get('http://localhost:8080/dht11/semana-temp')
-    .then(response => {setTempData(response.data), console.log(response)})
+    .then(response => setTempData(response.data))
     .catch(err => console.error('Erro ao buscar temperatura:', err));
 
     // Buscar dados da umidade
