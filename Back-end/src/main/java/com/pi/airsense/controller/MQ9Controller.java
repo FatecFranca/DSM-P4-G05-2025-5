@@ -9,9 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -57,7 +55,7 @@ public class MQ9Controller {
                 : service.listarTodos();
         dados = DataUtil.filtrarComDataValida(dados, MQ9Data::getDataHora);
 
-        DayOfWeek hoje = LocalDate.now().getDayOfWeek();
+        DayOfWeek hoje = getHorarioBR().getDayOfWeek();
 
         List<PpmDiaDTO> ppmData = dados.stream()
                 .collect(Collectors.groupingBy(
@@ -108,5 +106,9 @@ public class MQ9Controller {
     public ResponseEntity<MQ9Data> salvar(@RequestBody MQ9Data dado) {
         MQ9Data salvo = service.salvar(dado);
         return ResponseEntity.status(201).body(salvo);
+    }
+
+    private ZonedDateTime getHorarioBR(){
+        return ZonedDateTime.now(ZoneId.of("America/Sao_Paulo"));
     }
 }

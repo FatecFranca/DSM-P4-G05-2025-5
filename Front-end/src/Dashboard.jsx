@@ -55,7 +55,7 @@ function App() {
   useEffect(() => {
     // Buscar dados da temperatura
   axios.get('http://localhost:8080/dht11/semana-temp')
-    .then(response => setTempData(response.data))
+    .then(response => {setTempData(response.data), console.log(response)})
     .catch(err => console.error('Erro ao buscar temperatura:', err));
 
     // Buscar dados da umidade
