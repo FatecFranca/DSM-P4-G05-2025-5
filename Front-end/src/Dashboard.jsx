@@ -15,7 +15,7 @@ import axios from 'axios';
 import AirsenseIcon from './assets/imgs/Airsenseicon.png';
 import Tempicon from './assets/imgs/Tempicon.png';
 import Umidicon from './assets/imgs/umidicon.png';
-import QualidadeIcon from './assets/imgs/Qualidadeicon.png';
+import QualidadeIcon from './assets/imgs/qualidadeicon.png';
 
 function App() {
   const navigate = useNavigate();
