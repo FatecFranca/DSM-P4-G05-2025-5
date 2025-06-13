@@ -53,20 +53,13 @@ export default function Temperatura() {
           </ul>
         </nav>
       </div>
-        <div className="chart-card" style={{ marginTop: '1rem',maxWidth: '80%', height: '80%', margin: 'auto' }}>
-          <div
-            className="chart-card"
-            style={{ marginTop: '1rem', maxWidth: '80%', height: '80%', margin: 'auto' }}
-          >
             <iframe
               src="/relatorios/Temperatura.pdf"
-              title="Relatório Umidade"
+              title="Relatório Temperatura"
               width="100%"
-              height="100%"
+              height="90%"
               style={{ border: 'none' }}
             />
-          </div>
-        </div>
     </div>
   );
 }

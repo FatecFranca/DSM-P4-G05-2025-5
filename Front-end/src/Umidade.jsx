@@ -26,13 +26,13 @@ export default function Umidadequalidade() {
              <li>Dashboard ⮛
                <ul className="dropdown-content">
                  <li><a href="/temperatura">Temperatura</a></li>
-                 <li><a href="/umiqualidade">Umidade/Qualidade Ar</a></li>
+                 <li><a href="/umiqualidade">Umidade Ar</a></li>
                </ul>
              </li>
              <li>Relatórios ⮛
                <ul className="dropdown-content">
-                 <li><a href="#">Semana</a></li>
-                 <li><a href="#">Mês</a></li>
+                <li><a href="/relatorios/AnalisePi.pbix" download>PowerBi</a></li>
+                <li><a href="/relatorios/AnalisePi.pdf" download>PDF</a></li>
                </ul>
              </li>
              <li>Desenvolvedores ⮛
@@ -50,18 +50,13 @@ export default function Umidadequalidade() {
            </ul>
          </nav>
        </div>
-          <div
-            className="chart-card"
-            style={{ marginTop: '1rem', maxWidth: '80%', height: '80%', margin: 'auto' }}
-          >
             <iframe
               src="/relatorios/Umidade.pdf"
               title="Relatório Umidade"
               width="100%"
-              height="100%"
+              height="90%"
               style={{ border: 'none' }}
             />
-          </div>
     </div>
   );
 }

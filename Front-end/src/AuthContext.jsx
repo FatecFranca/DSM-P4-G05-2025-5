@@ -1,3 +1,4 @@
+import './axios-interceptor.js';
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }) => {
   // Função de login
   const login = async (username, password) => {
     try {
+      //
       const response = await axios.post('http://172.200.143.12:8080/auth/login', {
         username,
         password,

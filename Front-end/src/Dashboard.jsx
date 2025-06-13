@@ -1,4 +1,5 @@
 import './assets/App.css';
+import './axios-interceptor.js';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend
@@ -20,31 +21,67 @@ import QualidadeIcon from './assets/imgs/qualidadeicon.png';
 function App() {
   const navigate = useNavigate();
 
-  const [mostrarAlerta, setMostrarAlerta] = useState(false);
-  const [tipoAlerta, setTipoAlerta] = useState('');
-  const [valorAlerta, setValorAlerta] = useState('');
-  const [statusAlerta, setStatusAlerta] = useState('');
+  const [ultimaTemperatura, setUltimaTemperatura] = useState(null);
+  const [ultimaUmidade, setUltimaUmidade] = useState(null);
+  const [ultimaQualidade, setUltimaQualidade] = useState(null);
 
+  const [tipoAlerta, setTipoAlerta] = useState("");
+  const [valorAlerta, setValorAlerta] = useState(null);
+  const [statusAlerta, setStatusAlerta] = useState("");
+
+  
   const [tempData, setTempData] = useState([]);
   const [umidData, setUmidData] = useState([]);
-
+  
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [mostrarDefinirAlerta, setMostrarDefinirAlerta] = useState(false);
-  const [tipoAlertaDefinido, setTipoAlertaDefinido] = useState('');
-  const [valoresAlertasDefinidos, setValoresAlertasDefinidos] = useState({});
+  const [limiteAlerta, setLimiteAlerta] = useState(null);
+
+
+  const [alertasConfigurados, setAlertasConfigurados] = useState([]);
+  const [tipoAlertaDefinido, setTipoAlertaDefinido] = useState("");
+  const [inputValor, setInputValor] = useState("");
 
   const abrirModalDefinirAlerta = (tipo) => {
-  setTipoAlertaDefinido(tipo);
-  setMostrarDefinirAlerta(true);
+     setTipoAlertaDefinido(validaAlerta(tipo));
+
+    const alertaExistente = alertasConfigurados.find(
+      (a) => a.tipo === tipo.toUpperCase().replace(" ", "_")
+    );
+    setInputValor(alertaExistente?.valorLimite?.toString() || "");
+    setMostrarDefinirAlerta(true);
   };
 
-  const salvarAlertaDefinido = (tipo, valor) => {
-    setValoresAlertasDefinidos((prev) => ({
-      ...prev,
-      [tipo]: valor
-    }));
-    console.log(`Alerta definido para ${tipo}: ${valor}`);
+  const validaAlerta = (tipo) => {
+    if (tipo.toUpperCase() == "QUALIDADE DO AR") {
+      return "QUALIDADE_AR";
+    }
+    return tipo;
   };
 
+  const fetchAlertas = async () => {
+    try {
+      const res = await axios.get("http://172.200.143.12:8080/alertas");
+      setAlertasConfigurados(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar alertas:", err);
+    }
+  };
+  const buscarLimite = (tipo) => {
+    const alerta = alertasConfigurados.find((a) => a.tipo === tipo);
+    return alerta?.valorLimite;
+  };
+
+  const getStatus = (tipo, valorAtual) => {
+    const limite = buscarLimite(tipo);
+    if (limite === undefined) return null;
+    return valorAtual < limite ? "Dentro da faixa" : "Fora da faixa";
+  };
+
+  const statusTemperatura = getStatus("TEMPERATURA", ultimaTemperatura);
+  const statusUmidade = getStatus("UMIDADE", ultimaUmidade);
+  const statusQualidade = getStatus("QUALIDADE_AR", ultimaQualidade);
+  
   const { logout } = useAuth();
 
   const handleLogout = () => {
@@ -52,62 +89,97 @@ function App() {
   navigate('/login');
   }
 
-  useEffect(() => {
+  const [alertasAtivos, setAlertasAtivos] = useState({});
+  const [cooldowns, setCooldowns] = useState({});
+
+  
+useEffect(() => {
+  const verificarAlertas = (tipo, valor) => {
+    const limite = buscarLimite(tipo);
+    if (limite === undefined) return;
+
+    const agora = Date.now();
+    const cooldownAtivo = cooldowns[tipo] && cooldowns[tipo] > agora;
+
+    if (valor > limite) {
+      if (!alertasAtivos[tipo] && !cooldownAtivo) {
+        setTipoAlerta(tipo);
+        setValorAlerta(valor);
+        setLimiteAlerta(limite);
+        setStatusAlerta("Fora da faixa");
+        setMostrarAlerta(true);
+
+        setAlertasAtivos(prev => ({ ...prev, [tipo]: true }));
+
+
+        setCooldowns(prev => ({
+          ...prev,
+          [tipo]: agora + 30000
+        }));
+      }
+    } else {
+      if (alertasAtivos[tipo]) {
+        setAlertasAtivos(prev => {
+          const copy = { ...prev };
+          delete copy[tipo];
+          return copy;
+        });
+      }
+    }
+  };
+
+  if (ultimaTemperatura !== null) verificarAlertas("TEMPERATURA", ultimaTemperatura);
+  if (ultimaUmidade !== null) verificarAlertas("UMIDADE", ultimaUmidade);
+  if (ultimaQualidade !== null) verificarAlertas("QUALIDADE_AR", ultimaQualidade);
+
+
+},[ultimaTemperatura, ultimaUmidade, ultimaQualidade, alertasConfigurados, alertasAtivos]);
+
+
+useEffect(() => {
+  fetchAlertas();
+
     // Buscar dados da temperatura
+    ////
   axios.get('http://172.200.143.12:8080/dht11/semana-temp')
     .then(response => setTempData(response.data))
     .catch(err => console.error('Erro ao buscar temperatura:', err));
 
     // Buscar dados da umidade
+    ////
   axios.get('http://172.200.143.12:8080/dht11/semana-umidade')
     .then(response => setUmidData(response.data))
     .catch(err => console.error('Erro ao buscar umidade:', err));
-  }, []);
 
-  useEffect(() => {
+  axios
+    .get("http://172.200.143.12:8080/dht11?limit=1")
+    .then((res) => {
+      const ultimo = res.data[0];
+      if (ultimo) {
+        setUltimaTemperatura(ultimo.temperatura);
+        setUltimaUmidade(ultimo.umidade);
+      }
+    })
+    .catch((err) => console.error("Erro ao buscar último dht11:", err));
 
-    // não faz nada se o usuário ainda não definiu nenhum alerta
-    if (Object.keys(valoresAlertasDefinidos).length === 0) return;
-
-    const alertas = [];
-
-    // Dados simulados
-    const temperatura = 28;
-    const umidade = 45;
-    const qualidade = 75;
-
-    // Verificações apenas se os alertas foram definidos
-    if (valoresAlertasDefinidos["Temperatura"] !== undefined && temperatura > valoresAlertasDefinidos["Temperatura"]) {
-      alertas.push({ tipo: "Temperatura", valor: `${temperatura}°C`, status: "Alta" });
-    }
-
-    if (valoresAlertasDefinidos["Umidade"] !== undefined && umidade < valoresAlertasDefinidos["Umidade"]) {
-      alertas.push({ tipo: "Umidade", valor: `${umidade}%`, status: "Baixa" });
-    }
-
-    if (valoresAlertasDefinidos["Qualidade do Ar"] !== undefined && qualidade > valoresAlertasDefinidos["Qualidade do Ar"]) {
-      alertas.push({ tipo: "Qualidade do Ar", valor: qualidade, status: "Preocupante" });
-    }
-
-
-    let delay = 0;
-    alertas.forEach((alerta) => {
-      setTimeout(() => {
-        setTipoAlerta(alerta.tipo);
-        setValorAlerta(alerta.valor);
-        setStatusAlerta(alerta.status);
-        setMostrarAlerta(true);
-      }, delay);
-      delay += 4000;
-    });
-  }, []);
-
+  axios
+    .get("http://172.200.143.12:8080/mq9?limit=1")
+    .then((res) => {
+      const ultimo = res.data[0];
+      if (ultimo) {
+        setUltimaQualidade(ultimo.ppm);
+      }
+    })
+    .catch((err) => console.error("Erro ao buscar último mq9:", err));
+}, []);
+    
   return (
     <div className="app-container">
       {mostrarAlerta && (
         <ModalAlerta
           tipo={tipoAlerta}
           valor={valorAlerta}
+          limiteAtual={limiteAlerta}
           status={statusAlerta}
           onClose={() => setMostrarAlerta(false)}
         />
@@ -117,10 +189,9 @@ function App() {
         <ModalDefinirAlerta
           tipo={tipoAlertaDefinido}
           onClose={() => setMostrarDefinirAlerta(false)}
-          onSalvar={salvarAlertaDefinido}
+          onSalvar={fetchAlertas} // recarrega alertas após salvar
         />
       )}
-
 
       {/* HEADER */}
       <div className="header">
@@ -135,13 +206,13 @@ function App() {
             <li>Dashboard ⮛
               <ul className="dropdown-content">
                 <li><a href="/temperatura">Temperatura</a></li>
-                <li><a href="/umiqualidade">Umidade/Qualidade Ar</a></li>
+                <li><a href="/umiqualidade">Umidade Ar</a></li>
               </ul>
             </li>
             <li>Relatórios ⮛
               <ul className="dropdown-content">
-                <li><a href="#">Semana</a></li>
-                <li><a href="#">Mês</a></li>
+                <li><a href="/relatorios/AnalisePi.pbix" download>PowerBi</a></li>
+                <li><a href="/relatorios/AnalisePi.pdf" download>PDF</a></li>
               </ul>
             </li>
             <li>Desenvolvedores ⮛
@@ -197,8 +268,8 @@ function App() {
             <img width="100" alt="" src={Tempicon} onClick={() => navigate('/Temperatura')} style={{ cursor: 'pointer' }} />
             <div className="text-content">
               <h2>Temperatura</h2>
-              <p className="data">28°C</p>
-              <p className="status medium">Moderada</p>
+              <p className="data">{ultimaTemperatura !== null ? `${ultimaTemperatura}°C` : "--"}</p>
+              <p className="status medium">{statusTemperatura}</p>
               <button onClick={() => abrirModalDefinirAlerta('Temperatura')}>Definir alerta de temperatura</button>
             </div>
           </div>
@@ -209,8 +280,8 @@ function App() {
             <img width="100" alt="" src={Umidicon} style={{ cursor: 'pointer' }} />
             <div className="text-content">
               <h2>Umidade</h2>
-              <p className="data">58%</p>
-              <p className="status medium">Moderada</p>
+              <p className="data">{ultimaUmidade !== null ? `${ultimaUmidade}%` : "--"}</p>
+              <p className="status medium">{statusUmidade}</p>
               <button onClick={() => abrirModalDefinirAlerta('Umidade')}>Definir alerta de umidade</button>
             </div>
           </div>
@@ -221,8 +292,8 @@ function App() {
             <img width="110" alt="" src={QualidadeIcon} style={{ cursor: 'pointer' }} />
             <div className="text-content">
               <h2>Qualidade do Ar</h2>
-              <p className="data">71</p>
-              <p className="status medium">Preocupante</p>
+              <p className="data">{ultimaQualidade !== null ? ultimaQualidade : "--"}</p>
+              <p className="status medium">{statusQualidade}</p>
               <button onClick={() => abrirModalDefinirAlerta('Qualidade do Ar')}>Definir alerta de qualidade do ar</button>
             </div>
           </div>
